@@ -27,5 +27,5 @@ if (gputemp > 65):
     send_simple_message("The GPU is too hot at " + str(gputemp) + " degrees celcius.")
 
 if (cpu > 65):
-    send_simple_message("The GPU is too hot at " + str(cpu) + " degrees celcius.")
+    send_simple_message("The CPU is too hot at " + str(cpu) + " degrees celcius.")
 
