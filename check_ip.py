@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import os
 from os.path import join, dirname
 from dotenv import load_dotenv
@@ -17,8 +18,6 @@ def send_simple_message(message):
             "to": ["pedro@pimenta.co"],
             "subject": "I have a new IP",
             "text": message})
-
-time.sleep(30)
 
 extip = requests.get('https://api.ipify.org').text
 
