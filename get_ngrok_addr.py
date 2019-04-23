@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2.7
 import os
 from os.path import join, dirname
 from dotenv import load_dotenv
@@ -17,15 +17,39 @@ def airsonic_up():
         data = response.json()
         tunnels = data["tunnels"]
         for tunnel in tunnels:
-            if tunnel["proto"] == "https":
+            if tunnel["proto"] == "http":
                 ngrok_url = tunnel["public_url"]
         return ngrok_url
     except:
         return False
 
+def ngrok_ssh_url():
+    try:
+        response = requests.get("http://127.0.0.1:4080/api/tunnels")
+        data = response.json()
+        tunnels = data["tunnels"]
+        for tunnel in tunnels:
+            if tunnel["name"] == "ssh":
+                ssh_url = tunnel["public_url"]
+        return ssh_url
+    except:
+        return False
+
+def ngrok_vnc_url():
+    try:
+        response = requests.get("http://127.0.0.1:4080/api/tunnels")
+        data = response.json()
+        tunnels = data["tunnels"]
+        for tunnel in tunnels:
+            if tunnel["name"] == "vnc":
+                ssh_url = tunnel["public_url"]
+        return ssh_url
+    except:
+        return False
+
 def set_redir(ngrok_url):
     try:
-        url = "https://api.cloudflare.com/client/v4/zones/b6244deaa244bc53a3d3ce9cc9fe0d29/pagerules/db81da25b729d71348c0eb1962228a0b"
+        url = "https://api.cloudflare.com/client/v4/zones/b6244deaa244bc53a3d3ce9cc9fe0d29/pagerules/232fc4b6e1e7ac1d4e9728a8485a7706"
         headers = {"X-Auth-Email": "pedro@pimenta.co", "X-Auth-Key": cloudflare_api, "Content-Type": "application/json"}
         data = {
             "targets": [
@@ -33,7 +57,7 @@ def set_redir(ngrok_url):
                     "target": "url",
                     "constraint": {
                         "operator": "matches",
-                        "value": "music.pimenta.co/"
+                        "value": "music.pimenta.co/*"
                     }
                 }
             ],
@@ -53,23 +77,49 @@ def set_redir(ngrok_url):
     except:
         return False
 
-def send_simple_message(message):
+time.sleep(60)
+
+def send_simple_message(subject, message):
     return requests.post(
         "https://api.mailgun.net/v3/sandbox8a35a11f1c414544ad1e456e24756f9b.mailgun.org/messages",
         auth=("api", mailgun_api),
         data={"from": "Raspberry Home <mailgun@sandbox8a35a11f1c414544ad1e456e24756f9b.mailgun.org>",
             "to": ["pedro@pimenta.co"],
-            "subject": "I'm up",
+            "subject": subject,
             "text": message})
 
 ngrok_url_out = airsonic_up()
+ssh_url = ngrok_ssh_url()
+vnc_url = ngrok_vnc_url()
 
-send_simple_message("Pi just booted up")
+send_simple_message("I'm up", "Pi just booted up")
 
 if ngrok_url_out != False:
-    url_for_dns = ngrok_url_out + "/airsonic/"
+    url_for_dns = ngrok_url_out + "/$1"
     set_redir(url_for_dns)
-    send_simple_message("Ngrok address is: " + ngrok_url_out)
+    send_simple_message("New Ngrok address", "Ngrok address is: " + ngrok_url_out + ".\nSSH address is: " + ssh_url + ".\nVNC address is: " + vnc_url + ".")
 else:
-    send_simple_message("Ngrok not found")
+    send_simple_message("Ngrok error", "Ngrok not found")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
