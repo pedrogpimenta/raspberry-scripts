@@ -48,9 +48,9 @@ def set_urls():
         print 'Ngrok is not running.'
         return False
 
-def set_redir(ngrok_url):
+def set_redir(url):
     try:
-        url = "https://api.cloudflare.com/client/v4/zones/b6244deaa244bc53a3d3ce9cc9fe0d29/pagerules/232fc4b6e1e7ac1d4e9728a8485a7706"
+        cf_url = "https://api.cloudflare.com/client/v4/zones/b6244deaa244bc53a3d3ce9cc9fe0d29/pagerules/232fc4b6e1e7ac1d4e9728a8485a7706"
         headers = {"X-Auth-Email": "pedro@pimenta.co", "X-Auth-Key": cloudflare_api, "Content-Type": "application/json"}
         data = {
             "targets": [
@@ -66,7 +66,7 @@ def set_redir(ngrok_url):
                 {
                     "id": "forwarding_url",
                     "value": {
-                        "url": airsonic_url,
+                        "url": url,
                         "status_code": 301
                     }
                 }
@@ -74,7 +74,7 @@ def set_redir(ngrok_url):
             "priority": 1,
             "status": "active"
         }
-        patch = requests.patch(url, headers=headers, json=data)
+        patch = requests.patch(cf_url, headers=headers, json=data)
         print "Cloudflare redirection has been set."
     except:
         return False
