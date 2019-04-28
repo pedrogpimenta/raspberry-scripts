@@ -2,7 +2,6 @@
 import os
 from os.path import join, dirname
 from dotenv import load_dotenv
-import time
 import json
 import requests
 
@@ -44,7 +43,9 @@ def set_urls():
                 write_vnc = open('/home/pi/Scripts/current_vnc', 'w')
                 write_vnc.write(vnc_url)
                 write_vnc.close()
+        print 'All good.'
     except:
+        print 'Ngrok is not running.'
         return False
 
 def set_redir(ngrok_url):
@@ -74,10 +75,12 @@ def set_redir(ngrok_url):
             "status": "active"
         }
         patch = requests.patch(url, headers=headers, json=data)
+        print "Cloudflare redirection has been set."
     except:
         return False
 
 def send_simple_message(subject, message):
+    print "Email has been sent."
     return requests.post(
         "https://api.mailgun.net/v3/sandbox8a35a11f1c414544ad1e456e24756f9b.mailgun.org/messages",
         auth=("api", mailgun_api),
@@ -88,31 +91,24 @@ def send_simple_message(subject, message):
 
 set_urls()
 
-print airsonic_url
-print ssh_url
-print vnc_url
+print 'Airsonic URL: ' + airsonic_url
+print 'SSH URL: ' + ssh_url
+print 'VNC URL: ' + vnc_url
 
 if (airsonic_url != current_airsonic_url) or (ssh_url != current_ssh_url) or (vnc_url != current_vnc_url):
-    print "send email"
+    write_airsonic = open('/home/pi/Scripts/current_airsonic', 'w')
+    write_airsonic.write(airsonic_url)
+    write_airsonic.close()
+    write_ssh = open('/home/pi/Scripts/current_ssh', 'w')
+    write_ssh.write(ssh_url)
+    write_ssh.close()
+    write_vnc = open('/home/pi/Scripts/current_vnc', 'w')
+    write_vnc.write(vnc_url)
+    write_vnc.close()
     url_for_dns = airsonic_url + "/$1"
     set_redir(url_for_dns)
     send_simple_message("New Ngrok addresses", "Airsonic address is: " + airsonic_url + ".\nSSH address is: " + ssh_url + ".\nVNC address is: " + vnc_url + ".")
 
-#time.sleep(60)
-
-
-#ngrok_url_out = airsonic_up()
-#ssh_url = ngrok_ssh_url()
-#vnc_url = ngrok_vnc_url()
-
-#send_simple_message("I'm up", "Pi just booted up")
-
-#if ngrok_url_out != False:
-#    url_for_dns = ngrok_url_out + "/$1"
-#    set_redir(url_for_dns)
-#    send_simple_message("New Ngrok address", "Ngrok address is: " + ngrok_url_out + ".\nSSH address is: " + ssh_url + ".\nVNC address is: " + vnc_url + ".")
-#else:
-#    send_simple_message("Ngrok error", "Ngrok not found")
 
 
 
