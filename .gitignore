@@ -3,5 +3,4 @@ certificate.pem
 *.swp
 *.log
 *DRAFT*
-current_ip
-current_ngrok
+current_*
