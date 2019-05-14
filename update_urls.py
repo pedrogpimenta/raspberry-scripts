@@ -4,6 +4,8 @@ from os.path import join, dirname
 from dotenv import load_dotenv
 import json
 import requests
+import re
+from datetime import datetime
 
 dotenv_path = '/home/pi/Scripts/.env'
 load_dotenv(dotenv_path)
@@ -18,6 +20,29 @@ read_vnc_url = open('/home/pi/Scripts/current_vnc', 'r')
 current_vnc_url = read_vnc_url.read()
 
 airsonic_url = ssh_url = vnc_url = 'unavailable'
+
+def update_html():
+    with open('/var/lib/tomcat8/webapps/ROOT/index.html', 'r') as file:
+        global airsonic_url
+        global ssh_url
+        global vnc_url
+
+        data = file.readlines()
+
+        linenumber = 0
+        for line in data:
+            if re.search(r'airsonic-url', line):
+                data[linenumber+1] = airsonic_url + '\n'
+            if re.search(r'ssh-url', line):
+                data[linenumber+1] = ssh_url + '\n'
+            if re.search(r'vnc-url', line):
+                data[linenumber+1] = vnc_url + '\n'
+            if re.search(r'last-update-date', line):
+                data[linenumber+1] = datetime.now().strftime('%Y-%m-%d %H:%M:%S') + '\n'
+            linenumber += 1
+
+        with open('/var/lib/tomcat8/webapps/ROOT/index.html', 'w') as file:
+            file.writelines( data )
 
 def set_urls():
     global airsonic_url
@@ -107,6 +132,7 @@ if (airsonic_url != current_airsonic_url) or (ssh_url != current_ssh_url) or (vn
     write_vnc.close()
     url_for_dns = airsonic_url + "/$1"
     set_redir(url_for_dns)
+    update_html()
     send_simple_message("New Ngrok addresses", "Airsonic address is: " + airsonic_url + ".\nSSH address is: " + ssh_url + ".\nVNC address is: " + vnc_url + ".")
 
 
