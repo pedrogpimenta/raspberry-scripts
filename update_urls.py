@@ -55,19 +55,10 @@ def set_urls():
         for tunnel in tunnels:
             if tunnel["proto"] == "http":
                 airsonic_url = tunnel["public_url"]
-                write_airsonic = open('/home/pi/Scripts/current_airsonic', 'w')
-                write_airsonic.write(airsonic_url)
-                write_airsonic.close()
             if tunnel["name"] == "ssh":
                 ssh_url = tunnel["public_url"]
-                write_ssh = open('/home/pi/Scripts/current_ssh', 'w')
-                write_ssh.write(ssh_url)
-                write_ssh.close()
             if tunnel["name"] == "vnc":
                 vnc_url = tunnel["public_url"]
-                write_vnc = open('/home/pi/Scripts/current_vnc', 'w')
-                write_vnc.write(vnc_url)
-                write_vnc.close()
         print 'All good.'
     except:
         print 'Ngrok is not running.'
