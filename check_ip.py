@@ -23,14 +23,15 @@ time.sleep(60)
 
 extip = requests.get('https://api.ipify.org').text
 
-readFile = open("/home/pi/Scripts/current_ip", "r") 
+ip_file = join(dirname(__file__), 'current_ip')
+readFile = open(ip_file, "r") 
 fileipcontent = readFile.read()
 readFile.close()
 
 if (fileipcontent == extip):
     exit()
 else:
-    writeFile = open("/home/pi/Scripts/current_ip", "w")
+    writeFile = open(ip_file, "w")
     writeFile.write(extip)
     writeFile.close()
     send_simple_message("The new IP address is: " + extip)
