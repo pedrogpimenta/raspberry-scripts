@@ -12,44 +12,36 @@ load_dotenv(dotenv_path)
 mailgun_api = os.getenv('MAILGUN_API')
 cloudflare_api = os.getenv('CLOUDFLARE_API')
 
-ampache_file = join(dirname(__file__), 'current_ampache')
+home_file = join(dirname(__file__), 'current_home')
+music_file = join(dirname(__file__), 'current_music')
 ssh_file = join(dirname(__file__), 'current_ssh')
 vnc_file = join(dirname(__file__), 'current_vnc')
 
-read_ampache_url = open(ampache_file, 'r')
-current_ampache_url = read_ampache_url.read()
+read_home_url = open(home_file, 'r')
+current_home_url = read_home_url.read()
+read_music_url = open(music_file, 'r')
+current_music_url = read_music_url.read()
 read_ssh_url = open(ssh_file, 'r')
 current_ssh_url = read_ssh_url.read()
 read_vnc_url = open(vnc_file, 'r')
 current_vnc_url = read_vnc_url.read()
 
-ampache_url = ssh_url = vnc_url = 'unavailable'
+home_url = music_url = ssh_url = vnc_url = 'unavailable'
 
-#def update_html():
-#    with open('/var/lib/tomcat8/webapps/ROOT/index.html', 'r') as file:
-#        global ampache_url
-#        global ssh_url
-#        global vnc_url
-#
-#        data = file.readlines()
-#
-#        linenumber = 0
-#        for line in data:
-#            if re.search(r'ampache-url', line):
-#                data[linenumber+1] = ampache_url + '\n'
-#            if re.search(r'ssh-url', line):
-#                data[linenumber+1] = ssh_url + '\n'
-#            if re.search(r'vnc-url', line):
-#                data[linenumber+1] = vnc_url + '\n'
-#            if re.search(r'last-update-date', line):
-#                data[linenumber+1] = datetime.now().strftime('%Y-%m-%d %H:%M:%S') + '\n'
-#            linenumber += 1
-#
-#        with open('/var/lib/tomcat8/webapps/ROOT/index.html', 'w') as file:
-#            file.writelines( data )
+def update_html():
+    with open('/var/www/home/index.html', 'r') as file:
+        global music_url
+        global ssh_url
+        global vnc_url
+
+        data = 'Music: ' + music_url + '\n<br />SSH: ' + ssh_url + '\n<br />VNC: ' + vnc_url + '\n<br />Updated: ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + '\n'
+
+        with open('/var/www/home/index.html', 'w') as file:
+            file.writelines( data )
 
 def set_urls():
-    global ampache_url
+    global home_url
+    global music_url
     global ssh_url
     global vnc_url
     try:
@@ -57,8 +49,10 @@ def set_urls():
         data = response.json()
         tunnels = data["tunnels"]
         for tunnel in tunnels:
-            if tunnel["proto"] == "http":
-                ampache_url = tunnel["public_url"]
+            if tunnel["name"] == "home":
+                home_url = tunnel["public_url"]
+            if tunnel["name"] == "music":
+                music_url = tunnel["public_url"]
             if tunnel["name"] == "ssh":
                 ssh_url = tunnel["public_url"]
             if tunnel["name"] == "vnc":
@@ -68,9 +62,9 @@ def set_urls():
         print 'Ngrok is not running.'
         return False
 
-def set_redir(url):
+def set_redir(url, target, pagerule):
     try:
-        cf_url = "https://api.cloudflare.com/client/v4/zones/b6244deaa244bc53a3d3ce9cc9fe0d29/pagerules/232fc4b6e1e7ac1d4e9728a8485a7706"
+        cf_url = "https://api.cloudflare.com/client/v4/zones/b6244deaa244bc53a3d3ce9cc9fe0d29/pagerules/" + pagerule
         headers = {"X-Auth-Email": "pedro@pimenta.co", "X-Auth-Key": cloudflare_api, "Content-Type": "application/json"}
         data = {
             "targets": [
@@ -78,7 +72,7 @@ def set_redir(url):
                     "target": "url",
                     "constraint": {
                         "operator": "matches",
-                        "value": "music.pimenta.co/*"
+                        "value": target + ".pimenta.co/*"
                     }
                 }
             ],
@@ -111,21 +105,28 @@ def send_simple_message(subject, message):
 
 set_urls()
 
-print 'Ampache URL: ' + ampache_url
+print 'Home URL: ' + home_url
+print 'Music URL: ' + music_url
 print 'SSH URL: ' + ssh_url
 print 'VNC URL: ' + vnc_url
 
-if (ampache_url != current_ampache_url) or (ssh_url != current_ssh_url) or (vnc_url != current_vnc_url):
-    write_ampache = open(ampache_file, 'w')
-    write_ampache.write(ampache_url)
-    write_ampache.close()
+if (home_url != current_home_url) or (music_url != current_music_url) or (ssh_url != current_ssh_url) or (vnc_url != current_vnc_url):
+    write_home = open(home_file, 'w')
+    write_home.write(home_url)
+    write_home.close()
+    write_music = open(music_file, 'w')
+    write_music.write(music_url)
+    write_music.close()
     write_ssh = open(ssh_file, 'w')
     write_ssh.write(ssh_url)
     write_ssh.close()
     write_vnc = open(vnc_file, 'w')
     write_vnc.write(vnc_url)
     write_vnc.close()
-    url_for_dns = ampache_url + "/$1"
-    set_redir(url_for_dns)
-    #update_html()
-    send_simple_message("New Ngrok addresses", "Ampache address is: " + ampache_url + ".\nSSH address is: " + ssh_url + ".\nVNC address is: " + vnc_url + ".")
+    music_url_redir = music_url + "/$1"
+    home_url_redir = home_url + "/$1"
+    set_redir(music_url_redir, 'music', '232fc4b6e1e7ac1d4e9728a8485a7706')
+    set_redir(home_url_redir, 'home', '614e7c325b2a0b890a87f34f47d53fe2')
+    send_simple_message("New Ngrok addresses", "Home address is: " + home_url + ".\nMusic address is: " + music_url + ".\nSSH address is: " + ssh_url + ".\nVNC address is: " + vnc_url + ".")
+
+update_html()
